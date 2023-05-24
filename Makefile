@@ -5,4 +5,7 @@ run: build
 	./bin/ex
 
 test:
-	go test -v ./...
+	go test -coverprofile=coverage.out -v ./...
+
+cover: test
+	go tool cover -html=coverage.out
