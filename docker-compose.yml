@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  app:
+    build: 
+      dockerfile: Dockerfile
+      context: .
+      target: dev
+    ports:
+      - 8080:8080
+    command: air
+    volumes:
+      - ./:/app
+      - ./env/${ENV:-dev}:/app/.env
+    depends_on:
+      - pg
+      - cache
+    networks:
+      - internal
+  pg:
+    image: postgres:latest
+    restart: always
+    env_file:
+      - env/${ENV:-dev}
+    ports:
+      - '5432:5432'
+    volumes:
+      - database_postgres:/var/lib/postgresql/data
+    networks:
+      - internal
+  cache:
+    image: redis:alpine
+    restart: always
+    command: redis-server /usr/local/etc/redis/redis.conf
+    environment:
+      - REDIS_AOF_ENABLED=no
+      - ALLOW_EMPTY_PASSWORD=yes
+    env_file:
+      - env/${ENV:-dev}
+    ports:
+      - '6379:6379'
+    volumes: 
+      - cache:/data
+      - $PWD/docker/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - internal
+volumes:
+  database_postgres:
+    name: database_postgres_${ENV:-dev}
+  cache:
+    name: cache_${ENV:-dev}
+
+networks:
+  internal:
+    driver: bridge

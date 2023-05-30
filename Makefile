@@ -1,11 +1,21 @@
+all: run
+
+clean:
+	docker-compose down --volumes
+
 build:
 	go build -o bin/ex 
 
-run: build
-	./bin/ex
+doc:
+	swag init --parseDependency
 
-test:
+run: doc build 
+	docker compose up --build 
+
+test: 
+	ENV=test docker compose down --volumes
+	ENV=test docker compose -f docker-compose.yml -f docker-compose.test.yml up --build --abort-on-container-exit
+
+cover: 
 	go test -coverprofile=coverage.out -v ./...
-
-cover: test
 	go tool cover -html=coverage.out
